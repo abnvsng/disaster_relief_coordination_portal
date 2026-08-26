@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="eyebrow">Ranked queue{% if district %} &middot; {{ district.name }}{% endif %}</p>
+<h1>{{ total }} request{{ total|pluralize }}</h1>
+
+<form method="get" class="panel" style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+  <div style="flex:1;min-width:150px">
+    <label for="band">Priority</label>
+    <select name="band" id="band">
+      <option value="">All bands</option>
+      {% for b in bands %}<option value="{{ b }}" {% if b == band %}selected{% endif %}>{{ b }}</option>{% endfor %}
+    </select>
+  </div>
+  <div style="flex:1;min-width:150px">
+    <label for="state">Stage</label>
+    <select name="state" id="state">
+      <option value="">All stages</option>
+      {% for s in states %}<option value="{{ s }}" {% if s == state %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <button class="btn" type="submit">Apply</button>
+</form>
+
+<ul class="tag-list">
+  {% for r in rows %}{% include "portal/_tag.html" %}{% empty %}
+  <p class="muted">No request matches that filter.</p>
+  {% endfor %}
+</ul>
+
+{% if page.has_other_pages %}
+<nav class="btn-row" style="margin-top:18px;justify-content:space-between">
+  {% if page.has_previous %}
+    <a class="btn ghost" href="?{{ querystring }}&amp;page={{ page.previous_page_number }}">Previous</a>
+  {% else %}<span></span>{% endif %}
+  <span class="small muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}
+    <a class="btn ghost" href="?{{ querystring }}&amp;page={{ page.next_page_number }}">Next</a>
+  {% else %}<span></span>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}
