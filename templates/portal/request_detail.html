@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="eyebrow">Request #{{ req.pk }} &middot; {{ req.habitation.code }} &middot; {{ req.channel }}</p>
+<h1>{{ req.habitation.name }}, {{ req.habitation.block.name }}</h1>
+
+<div class="panel">
+  <div class="counters">
+    <div class="counter band-{{ req.priority }}"><b>{{ req.priority }}</b><span>{% if req.priority_overridden %}Set by hand{% else %}Computed{% endif %}</span></div>
+    <div class="counter"><b>{{ req.triage_score }}</b><span>Score</span></div>
+    <div class="counter"><b>{{ req.hours_left }}h</b><span>{% if req.sla_breached %}Past deadline{% else %}Left{% endif %}</span></div>
+    <div class="counter"><b>{{ req.access_mode }}</b><span>Access</span></div>
+  </div>
+</div>
+
+<div class="split">
+  <div>
+    <div class="panel">
+      <h3>Household and site</h3>
+      <table class="grid">
+        <tr><th>People</th><td>{{ req.total_members }}</td>
+            <th>Trapped</th><td class="num">{{ req.people_trapped }}</td></tr>
+        <tr><th>Infants / elderly</th><td>{{ req.infants_under_2 }} / {{ req.elderly_over_60 }}</td>
+            <th>Livestock</th><td class="num">{{ req.livestock_count }}</td></tr>
+        <tr><th>Road</th><td>{{ req.get_road_status_display }}</td>
+            <th>Water depth</th><td class="num">{{ req.water_depth_m }} m</td></tr>
+        <tr><th>Needs</th><td colspan="3">{{ req.need_labels|join:", " }}</td></tr>
+        <tr><th>Hazard</th><td colspan="3">{% if req.hazard_event %}{{ req.hazard_event.name }} ({{ req.hazard_event.hazard }}, severity {{ req.hazard_event.severity }}){% else %}none declared{% endif %}</td></tr>
+      </table>
+    </div>
+
+    {% if breakdown %}
+    <div class="panel">
+      <h3>Score ledger</h3>
+      <div class="ledger">
+        {% for row in breakdown %}
+        <div class="ledger-row">
+          <span>{{ row.key }}</span>
+          <span class="ledger-bar"><i style="width: {{ row.pct }}%"></i></span>
+          <span class="num mono">{{ row.value }}/{{ row.cap }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <h3 style="margin-top:18px">Reasons on record</h3>
+      <ul class="small">{% for r in snapshot.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+      <h3>Relief kit as computed</h3>
+      <table class="grid">
+        <tr><th>Item</th><th>Quantity</th><th>Weight</th></tr>
+        {% for line in kit %}
+        <tr><td>{{ line.item }}</td>
+            <td class="num">{{ line.quantity }} {{ line.unit }}</td>
+            <td class="num">{{ line.weight_kg }} kg</td></tr>
+        {% empty %}<tr><td colspan="3" class="muted">No material lines for these needs.</td></tr>
+        {% endfor %}
+      </table>
+      {% if depot %}
+      <p class="small muted" style="margin-top:10px">
+        Nearest capable depot: <b>{{ depot.name }}</b>, {{ distance }} km by {{ req.access_mode }}.
+      </p>
+      {% endif %}
+    </div>
+
+    {% for d in dispatches %}
+    <div class="panel">
+      <h3>Dispatch #{{ d.pk }} &middot; {{ d.status }}</h3>
+      <p class="small">{{ d.depot.name }} &rarr; {{ req.habitation.name }} &middot;
+        {{ d.payload_kg }} kg &middot; {{ d.trips_planned }} trip(s) by {{ d.access_mode }} &middot;
+        ETA {{ d.eta_hours }} h{% if d.proof_reference %} &middot; proof {{ d.proof_reference }}{% endif %}</p>
+      <table class="grid">
+        {% for line in d.lines.all %}
+        <tr><td>{{ line.resource.label }}</td><td class="num">{{ line.quantity }} {{ line.resource.unit }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+    {% endfor %}
+
+    <div class="panel">
+      <h3>Audit trail</h3>
+      <ul class="timeline">
+        {% for log in logs %}
+        <li><b>{{ log.from_state }} &rarr; {{ log.to_state }}</b>
+          &middot; {{ log.at|date:"d M Y, H:i" }}
+          {% if log.actor %} &middot; {{ log.actor.username }} ({{ log.actor_role }}){% endif %}
+          {% if log.note %}<br><span class="muted">{{ log.note }}</span>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <aside>
+    <div class="panel">
+      <h3>Move this request</h3>
+      {% if moves %}
+        {% for target, label in moves.items %}
+        <form method="post" action="{% url 'move' req.pk %}" style="margin-bottom:10px">
+          {% csrf_token %}
+          <input type="hidden" name="to_state" value="{{ target.value }}">
+          {% if target.value == "DELIVERED" %}
+            <div class="field"><label>Proof of delivery (OTP or photo ref)</label>
+            <input type="text" name="proof_reference" placeholder="OTP-4417"></div>
+          {% endif %}
+          {% if target.value == "UNREACHABLE" or target.value == "CANCELLED" %}
+            <div class="field"><label>Reason</label>
+            <input type="text" name="note" placeholder="current too strong"></div>
+          {% endif %}
+          <button class="btn {% if target.value == 'CANCELLED' %}danger{% endif %}" type="submit">
+            {{ label }}
+          </button>
+        </form>
+        {% endfor %}
+      {% else %}
+        <p class="small muted">{{ req.state }} is terminal. Nothing further to do.</p>
+      {% endif %}
+    </div>
+
+    {% if can_dispatch and req.state == "PRIORITISED" %}
+    <div class="panel">
+      <h3>Fulfilment</h3>
+      <form method="post" action="{% url 'plan_dispatch' req.pk %}">
+        {% csrf_token %}
+        <p class="small muted">Picks the nearest capable depot, cuts the kit,
+          reserves the stock and assigns the request in one step.</p>
+        <button class="btn" type="submit">Plan dispatch</button>
+      </form>
+    </div>
+    {% endif %}
+
+    {% if can_override %}
+    <div class="panel">
+      <h3>Override the ranking</h3>
+      <form method="post" action="{% url 'override' req.pk %}">
+        {% csrf_token %}
+        {% for f in override_form %}
+          <div class="field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}
+          {% if f.help_text %}<span class="helptext">{{ f.help_text }}</span>{% endif %}</div>
+        {% endfor %}
+        <button class="btn" type="submit">Record override</button>
+      </form>
+      <p class="small muted" style="margin-top:10px">
+        The computed score stays as it is. The override is an audit entry, so the
+        original ranking remains reconstructable.
+      </p>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+      <h3>Recompute</h3>
+      <form method="post" action="{% url 'rescore' req.pk %}">
+        {% csrf_token %}
+        <p class="small muted">Re-runs triage against the current clock and stock.
+          Adds a snapshot, never edits the old one.</p>
+        <button class="btn ghost" type="submit">Run triage again</button>
+      </form>
+    </div>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% comment %}One request, drawn as a paper triage tag.{% endcomment %}
+<a class="tag band-{{ r.priority }}{% if r.sla_breached %} breached{% endif %}"
+   href="{% url 'request_detail' r.pk %}">
+  <span class="tag-stub"><span class="serial">#{{ r.pk }}</span></span>
+  <span class="tag-body">
+    <span class="tag-title">{{ r.habitation.name }}</span>
+    <span class="tag-meta">
+      <span>{{ r.habitation.code }}</span>
+      <span>{{ r.total_members }} people{% if r.people_trapped %}, {{ r.people_trapped }} trapped{% endif %}</span>
+      <span>{{ r.need_labels|join:", " }}</span>
+      <span class="pill">{{ r.state }}</span>
+      <span class="pill">{{ r.access_mode }}</span>
+      {% if r.sla_breached %}<span class="pill warn">SLA breached</span>
+      {% else %}<span>{{ r.hours_left }} h left</span>{% endif %}
+    </span>
+  </span>
+  <span class="tag-score">
+    <span class="score-value">{{ r.triage_score }}</span>
+    <span class="score-label">{{ r.priority }}{% if r.priority_overridden %} &middot; set by hand{% endif %}</span>
+  </span>
+</a>

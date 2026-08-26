@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
+{% block content %}
+<p class="eyebrow">Request #{{ req.pk }}</p>
+<h1>{{ req.habitation.name }}</h1>
+
+<div class="panel">
+  <div class="counters">
+    <div class="counter band-{{ req.priority }}"><b>{{ req.priority }}</b><span>Priority</span></div>
+    <div class="counter"><b>{{ req.triage_score }}</b><span>Score</span></div>
+    <div class="counter"><b>{{ req.sla_hours }}h</b><span>Deadline</span></div>
+    <div class="counter"><b>{{ req.state }}</b><span>Stage</span></div>
+  </div>
+</div>
+
+{% if snapshot %}
+<div class="panel">
+  <h3>Why this ranking</h3>
+  <ul class="small">{% for r in snapshot.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="panel">
+  <h3>History</h3>
+  <ul class="timeline">
+    {% for log in logs %}
+      <li><b>{{ log.to_state }}</b> — {{ log.at|date:"d M, H:i" }}{% if log.note %} — {{ log.note }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
