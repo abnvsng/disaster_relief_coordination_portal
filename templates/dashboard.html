@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="eyebrow">Control room{% if district %} &middot; {{ district.name }}, {{ district.state.code }}{% endif %}</p>
+<h1>{{ queue_size }} open request{{ queue_size|pluralize }}</h1>
+
+<div class="panel">
+  <div class="counters">
+    <div class="counter band-RED"><b>{{ counts.RED }}</b><span>Red</span></div>
+    <div class="counter band-ORANGE"><b>{{ counts.ORANGE }}</b><span>Orange</span></div>
+    <div class="counter band-YELLOW"><b>{{ counts.YELLOW }}</b><span>Yellow</span></div>
+    <div class="counter band-GREEN"><b>{{ counts.GREEN }}</b><span>Green</span></div>
+  </div>
+</div>
+
+<div class="split">
+  <div>
+    <h3>Top of the queue</h3>
+    <ul class="tag-list">
+      {% for r in queue %}{% include "portal/_tag.html" %}{% empty %}
+      <p class="muted">Nothing waiting. Every open request has been served.</p>
+      {% endfor %}
+    </ul>
+    <p style="margin-top:14px"><a class="btn ghost" href="{% url 'queue' %}">Open the full queue</a></p>
+  </div>
+
+  <aside>
+    <div class="panel">
+      <h3>Past deadline</h3>
+      {% if breached %}
+        <p class="small"><span class="pill warn">{{ breached_count }} breached</span></p>
+        <table class="grid">
+          {% for r in breached %}
+          <tr>
+            <td><a href="{% url 'request_detail' r.pk %}">#{{ r.pk }} {{ r.habitation.name }}</a></td>
+            <td class="num">{{ r.hours_left }} h</td>
+          </tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <p class="small muted">No request has passed its deadline.</p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h3>By stage</h3>
+      <table class="grid">
+        {% for row in by_state %}<tr><td>{{ row.state }}</td><td class="num">{{ row.n }}</td></tr>{% endfor %}
+      </table>
+    </div>
+
+    <div class="panel">
+      <h3>Open hazards</h3>
+      {% for e in events %}
+        <p class="small" style="margin:0 0 8px"><b>{{ e.name }}</b><br>
+        <span class="pill">{{ e.hazard }}</span> <span class="pill">sev {{ e.severity }}</span></p>
+      {% empty %}<p class="small muted">None declared.</p>{% endfor %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

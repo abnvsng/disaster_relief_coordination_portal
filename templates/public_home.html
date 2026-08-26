@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="eyebrow">District Disaster Management Authority</p>
+<h1>Tell the district what your household needs.</h1>
+<p class="lede">
+  Every report is scored the same way, by the same rules, whether it arrives
+  by SMS from a feature phone or by this form. Ranking is published with the
+  reasons behind it, so you can see why a request sits where it does.
+</p>
+
+<div class="btn-row" style="margin:22px 0 30px">
+  <a class="btn" href="{% url 'report' %}">Report a need</a>
+  <a class="btn ghost" href="{% url 'sms_simulator' %}">Send it by SMS instead</a>
+</div>
+
+<div class="split">
+  <div>
+    <div class="panel">
+      <h3>How a report travels</h3>
+      <ul class="timeline">
+        <li><b>REPORTED</b> — the portal records it and replies in your language within seconds.</li>
+        <li><b>VERIFIED</b> — a volunteer, NGO coordinator or district officer confirms it on site.</li>
+        <li><b>PRIORITISED</b> — it enters the ranked queue with a service deadline.</li>
+        <li><b>ASSIGNED &amp; IN TRANSIT</b> — a depot cuts the kit and a vehicle, boat or porter leaves.</li>
+        <li><b>DELIVERED</b> — handover is recorded with an OTP or a photograph.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>What we ask for, and what we never ask for</h3>
+      <p class="small">
+        We ask how many people are in the household and how many of them are
+        infants, elderly, pregnant, disabled or on regular medication. Those
+        counts are verifiable at the door and they decide the size of the kit.
+      </p>
+      <p class="small">
+        We never ask for caste, religion, income or an Aadhaar number. None of
+        those fields exist in this system.
+      </p>
+    </div>
+  </div>
+
+  <aside>
+    <div class="panel">
+      <h3>Open hazard events</h3>
+      {% for e in events %}
+        <p class="small" style="margin:0 0 10px">
+          <b>{{ e.name }}</b><br>
+          <span class="pill">{{ e.hazard }}</span>
+          <span class="pill">severity {{ e.severity }}/5</span><br>
+          <span class="muted">{% for d in e.districts.all %}{{ d.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+        </p>
+      {% empty %}
+        <p class="small muted">No hazard event is open right now. You can still file a report.</p>
+      {% endfor %}
+    </div>
+    <div class="panel">
+      <h3>Need codes for SMS</h3>
+      <table class="grid">
+        {% for code, label in need_labels %}<tr><td class="mono">{{ code }}</td><td>{{ label }}</td></tr>{% endfor %}
+      </table>
+    </div>
+  </aside>
+</div>
+{% endblock %}
