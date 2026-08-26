@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>My reports</h1>
+<ul class="tag-list">
+  {% for r in rows %}{% include "portal/_tag.html" %}{% empty %}
+  <p class="muted">You have not filed a report yet. <a href="{% url 'report' %}">File one</a>.</p>
+  {% endfor %}
+</ul>
+{% endblock %}

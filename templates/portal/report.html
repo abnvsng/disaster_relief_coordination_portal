@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
+{% block content %}
+<p class="eyebrow">Intake</p>
+<h1>Report a need</h1>
+<p class="lede">Fill what you know. A blank field is better than a guess.</p>
+
+<form method="post" class="panel" style="margin-top:20px">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for f in form %}
+    <div class="field">
+      <label for="{{ f.id_for_label }}">{{ f.label }}</label>
+      {{ f }}
+      {% if f.help_text %}<span class="helptext">{{ f.help_text }}</span>{% endif %}
+      {{ f.errors }}
+    </div>
+  {% endfor %}
+  <button class="btn" type="submit">Submit report</button>
+</form>
+{% endblock %}
