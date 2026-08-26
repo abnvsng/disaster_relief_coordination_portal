@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="eyebrow">Intake &middot; SMS line</p>
+<h1>The phone line, on screen</h1>
+<p class="lede">
+  Same parser, same service, same acknowledgement a real handset would get.
+  Only the transport is simulated, because A2P SMS to Indian numbers needs
+  DLT registration this project cannot hold.
+</p>
+
+<div class="split" style="margin-top:22px">
+  <div>
+    <div class="handset">
+      <div class="screen">{% if reply %}{{ reply }}{% else %}Ready.
+Type a message and press send.{% endif %}</div>
+      <form method="post">
+        {% csrf_token %}
+        <textarea name="body" rows="3" maxlength="160" placeholder="HELP DBG012 6 WTR,RTN,FDR 90 0">{{ request.POST.body }}</textarea>
+        <input type="text" name="from_phone" value="{{ request.POST.from_phone|default:'+919000000001' }}"
+               style="margin-top:8px" aria-label="From number">
+        <select name="language" style="margin-top:8px" aria-label="Reply language">
+          <option value="en">Reply in English</option>
+          <option value="hi" {% if request.POST.language == 'hi' %}selected{% endif %}>Reply in Hindi</option>
+          <option value="bn" {% if request.POST.language == 'bn' %}selected{% endif %}>Reply in Bengali</option>
+        </select>
+        <button class="btn" type="submit">Send</button>
+      </form>
+    </div>
+    <div class="panel" style="margin-top:18px">
+      <h3>Grammar</h3>
+      <p class="mono small">{{ format_help }}</p>
+      <p class="small muted">Devanagari digits, lowercase and Hindi keywords
+        (MADAD, PANI, KHANA, CHARA, BACHAO) are all accepted.</p>
+    </div>
+  </div>
+
+  <aside>
+    <div class="panel">
+      <h3>Outbox</h3>
+      <table class="grid">
+        {% for m in outbox %}
+        <tr><td class="mono small">{{ m.to_phone }}</td>
+            <td class="small">{{ m.body }}</td>
+            <td>{% if m.delivered %}<span class="pill">sent</span>{% else %}<span class="pill warn">failed</span>{% endif %}</td></tr>
+        {% empty %}<tr><td class="muted small">Nothing sent yet.</td></tr>{% endfor %}
+      </table>
+    </div>
+    <div class="panel">
+      <h3>Inbox</h3>
+      <table class="grid">
+        {% for m in inbox %}
+        <tr><td class="mono small">{{ m.from_phone }}</td>
+            <td class="small">{{ m.body }}</td>
+            <td>{% if m.accepted %}<span class="pill">filed</span>{% else %}<span class="pill warn">rejected</span>{% endif %}</td></tr>
+        {% empty %}<tr><td class="muted small">Nothing received yet.</td></tr>{% endfor %}
+      </table>
+    </div>
+  </aside>
+</div>
+{% endblock %}
