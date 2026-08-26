@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block wrapclass %}narrow{% endblock %}
+{% block content %}
+<p class="eyebrow">Restricted</p>
+<h1>Sign in</h1>
+<p class="lede">For district staff, depot managers, NGO coordinators and volunteers.
+Citizens do not need an account to report a need.</p>
+
+<form method="post" class="panel" style="margin-top:20px">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  {% for f in form %}
+    <div class="field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}</div>
+  {% endfor %}
+  <button class="btn" type="submit">Sign in</button>
+</form>
+{% endblock %}
