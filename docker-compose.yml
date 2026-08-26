@@ -1,0 +1,50 @@
+services:
+  web:
+    build: .
+    env_file: .env
+    environment:
+      DJANGO_DB_PATH: /app/data/relief.sqlite3
+    volumes:
+      - relief-data:/app/data
+    expose:
+      - "8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # The PRIORITISED state's "track SLA countdown", made real.
+  # Same image, no extra dependency, about 60 MB of RAM.
+  ticker:
+    build: .
+    env_file: .env
+    environment:
+      DJANGO_DB_PATH: /app/data/relief.sqlite3
+    volumes:
+      - relief-data:/app/data
+    command: sh -c "while true; do python manage.py check_slas --quiet; sleep 300; done"
+    depends_on:
+      - web
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  relief-data:
+  caddy-data:
+  caddy-config:
