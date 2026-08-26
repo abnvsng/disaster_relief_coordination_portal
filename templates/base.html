@@ -1,0 +1,53 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}District Relief Coordination Portal{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/portal.css' %}">
+{% block head %}{% endblock %}
+</head>
+<body>
+<header class="masthead">
+  <div class="masthead-inner">
+    <a class="wordmark" href="{% url 'public_home' %}">District Relief <span>Coordination</span></a>
+    <nav>
+      <a href="{% url 'report' %}">Report a need</a>
+      {% if profile and profile.sees_control_room %}
+        <a href="{% url 'dashboard' %}">Control room</a>
+        <a href="{% url 'queue' %}">Queue</a>
+        <a href="{% url 'map' %}">Map</a>
+      {% endif %}
+      <a href="{% url 'sms_simulator' %}">SMS line</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'my_reports' %}">My reports</a>
+        <form method="post" action="{% url 'logout' %}" style="display:inline">
+          {% csrf_token %}<button class="btn ghost" style="padding:2px 10px;font-size:11px">Sign out</button>
+        </form>
+      {% else %}
+        <a href="{% url 'login' %}">Sign in</a>
+      {% endif %}
+    </nav>
+    {% if profile %}<span class="whoami">{{ user.username }} &middot; {{ profile.get_role_display }}{% if profile.district %} &middot; {{ profile.district.name }}{% endif %}</span>{% endif %}
+  </div>
+</header>
+
+<main class="wrap {% block wrapclass %}{% endblock %}">
+  {% if messages %}
+    <ul class="messages">
+      {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+  {% block content %}{% endblock %}
+  <footer class="foot">
+    Built for CS311P, Software Engineering &amp; Design Principles Lab, KIET.
+    Triage is advisory. A district officer can override any ranking, and every
+    override is recorded against a name.
+  </footer>
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>
