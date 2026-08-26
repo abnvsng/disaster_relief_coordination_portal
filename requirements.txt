@@ -1,0 +1,11 @@
+Django>=5.1,<5.2
+gunicorn>=22.0
+whitenoise>=6.7
+
+# Optional. Only needed when SMS_BACKEND=twilio.
+# twilio>=9.0
+
+# Development only.
+radon>=6.0
+coverage>=7.0
+pytest>=8.0
